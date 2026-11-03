@@ -1,31 +1,67 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tree Visualization</title>
-    <link rel="stylesheet" href="style.css">
-</head>
+    <link rel="stylesheet" href="style.css" />
+  </head>
 
-    <body>
-        
-        <Header>
-            <h1>Binary Tree and Graph Visualizer</h1>
-        </Header>
+  <body>
+    <header>
+      <h1>Binary Tree and Graph Visualizer</h1>
+    </header>
 
-        <section class="Container">
-            <section class="Main">
-                <p>Enter Nodes: </p>
-                <textarea id="Nodes" placeholder="Enter tree node eg:-1,2,3 or 1 2 3"></textarea>
-                <p id="count">The number of tree nodes: </p>
-                <button>Submit</button>
-                <button>Reset</button>
-                <p>Input type: Binary Tree</p>
-            </section>
-        </section>
+    <section class="Container">
+      <section class="Main">
+        <p>Enter Nodes:</p>
+        <textarea
+          id="Nodes"
+          placeholder="Enter tree node eg:-1,2,3 or 1 2 3"
+        ></textarea>
+        <p id="count">The number of tree nodes:</p>
+        <button>Submit</button>
+        <button>Reset</button>
+        <p>Input type: Binary Tree</p>
+      </section>
+    </section>
 
-    </body>
+    <section class="Tree">
+      <svg id="tree" width="100%" height="100%"></svg>
+      <section>
+        <button id="download">Hide Settings</button> <br />
 
-    <script src="script.js"></script>
+        <label for="orientation">Orientation:</label>
+        <select id="orientation">
+          <option value="horizontal">Horizontal</option>
+          <option value="vertical">Vertical</option>
+        </select>
 
+        <label for="nodeShape">Node Shape:</label>
+        <select id="nodeShape">
+          <option value="circle">Circle</option>
+          <option value="square">Square</option>
+        </select>
+
+        <label for="linkShape">Link Shape:</label>
+        <select id="linkShape">
+          <option value="diagonal">Diagonal</option>
+          <option value="step">Step</option>
+          <option value="straight">Straight</option>
+          <option value="elbow">Elbow</option>
+        </select>
+        <br />
+        <label for="nodeRadius">Node Radius:</label>
+        <input type="number" id="nodeRadius" value="10" min="5" max="20" />
+
+        <label for="nodeColor">Node Color:</label>
+        <select id="nodeColor">
+          <option value="red">Colour</option>
+          <option value="green">black&white</option>
+        </select>
+      </section>
+    </section>
+  </body>
+
+  <script src="script.js"></script>
 </html>
