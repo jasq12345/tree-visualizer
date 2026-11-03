@@ -1,0 +1,38 @@
+*{
+    font-family:Verdana, Geneva, Tahoma, sans-serif;
+}
+
+header{
+    width: 100%;
+    text-align: center;
+    padding: 20px 20px 0px 20px;
+    color: rgb(88, 88, 255);
+}
+
+.Container{
+    display: flex;
+    justify-content: center;
+}
+
+.Main{
+    padding: 30px;
+    border: 1px rgb(233, 233, 233) solid;
+    border-radius: 12px;
+    width: 60%;
+}
+
+textarea{
+    transition: 0.3s;
+    border-radius: 7px;
+    width: 100%;
+    border: 1px rgb(233, 233, 233) solid;
+    height: 70px;
+}
+
+textarea:focus{
+    border: 1px royalblue solid;
+}
+
+textarea:not(:focus){
+    color: 1px rgb(233, 233, 233) solid;
+}
