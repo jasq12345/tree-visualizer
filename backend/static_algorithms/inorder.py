@@ -1,6 +1,6 @@
 from models.tree import Node, BinaryTree
 
-def inorder_recursive(root_or_tree):
+def inorder_recursive(root_or_tree, target=None):
     root = root_or_tree.root if isinstance(root_or_tree, BinaryTree) else root_or_tree
     result = []
     def traverse(node):
@@ -9,4 +9,4 @@ def inorder_recursive(root_or_tree):
             result.append(node.value)
             traverse(node.right)
     traverse(root)
-    return result
+    return result, None

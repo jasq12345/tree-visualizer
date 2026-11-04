@@ -5,6 +5,7 @@ from core.config import MAX_NODES
 
 class TreeRequest(BaseModel):
     values: list[int] = Field(max_length=MAX_NODES)
+    target: int | None = None
 
     @field_validator("values")
     @classmethod

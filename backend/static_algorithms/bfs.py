@@ -1,10 +1,10 @@
 from models.tree import Node, BinaryTree
 from collections import deque
 
-def bfs_traversal(root_or_tree):
+def bfs_traversal(root_or_tree, target=None):
     root = root_or_tree.root if isinstance(root_or_tree, BinaryTree) else root_or_tree
     if not root:
-        return []
+        return [], None
     result = []
     queue = deque([root])
 
@@ -15,4 +15,4 @@ def bfs_traversal(root_or_tree):
             queue.append(node.left)
         if node.right:
             queue.append(node.right)
-    return result
+    return result, None

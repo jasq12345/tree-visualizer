@@ -45,11 +45,12 @@ backend/
   main.py                      app, CORS, routers
   core/config.py               CORS_ORIGINS, MAX_NODES
   models/tree.py               Node, BinaryTree, BinaryTree.from_values
-  models/requests.py           TreeRequest  {"values": [...]}
-  models/responses.py          AlgorithmResult  {"tree": ..., "steps": [...]}
+  models/requests.py           TreeRequest  {"values": [...], "target": ...}
+  models/responses.py          TreeView, AlgorithmResult, AlgorithmInfo, Layout
   api/routers/tree.py          POST /tree
   api/routers/algorithms.py    GET /algorithms, POST /algorithms/{name}
   services/algorithm_provider.py   ALGORITHMS: name -> AlgorithmSpec(algorithm, needs_target)
+  services/layout.py           node positions (x, y) and edges for drawing
   services/execution_manager.py    empty, reserved for the compiler
   static_algorithms/           one file per algorithm (9 files)
 frontend/
@@ -62,33 +63,34 @@ frontend/
 
 | Method | Path | Body | Returns |
 |---|---|---|---|
-| GET | `/algorithms` | – | `["inorder", "preorder", ...]` |
-| POST | `/tree` | `{"values": [10, 5, 12]}` | `{"root": {"value": 10, "left": {...}, "right": {...}}}` |
-| POST | `/algorithms/{name}` | `{"values": [10, 5, 12]}` | `{"tree": {...}, "steps": [5, 10, 12]}` |
+| GET | `/algorithms` | – | `[{"name": "inorder", "needs_target": false}, ...]` |
+| POST | `/tree` | `{"values": [10, 5, 12]}` | `{"tree": {...}, "layout": {...}}` |
+| POST | `/algorithms/{name}` | `{"values": [10, 5, 12], "target": 12}` | `{"tree": {...}, "layout": {...}, "steps": [...], "result": ...}` |
 
-Errors: `422` invalid input (message in `detail`), `404` unknown algorithm, `501` not implemented yet.
+`target` is optional and only needed when `needs_target` is `true`.
 
-> **Partly working:** `inorder`, `preorder`, `postorder` and `bfs` work. `bst_search`, `dfs_search`, `calculate_subtree_sum`
-> and `count_nodes_and_leaves` return `500` until they get the new signature (they expect a node, the searches also a `target`).
+Errors: `422` invalid input or missing `target` (message in `detail`), `404` unknown algorithm.
 
-### Planned response (layout + ASCII)
+> **Partly working:** `inorder`, `preorder`, `postorder` and `bfs` work. `bst_search`, `dfs_search`, `calculate_tree_height`,
+> `calculate_subtree_sum` and `count_nodes_and_leaves` return `500` until they get the new signature (they still expect a node).
 
-Both `POST /tree` and `POST /algorithms/{name}` will also return `layout` and `ascii`, example for `[10, 5, 12, 15, 16]`:
+### Response format
+
+Example of `POST /algorithms/inorder` for `[10, 5, 12, 15, 16]`:
 
 ```json
 {
-  "tree": {"root": {...}},
+  "tree": {"root": {"value": 10, "left": {...}, "right": {...}}},
   "layout": {
     "nodes": [
-      {"value": 10, "x": 1, "y": 0},
       {"value": 5,  "x": 0, "y": 1},
+      {"value": 10, "x": 1, "y": 0},
       {"value": 12, "x": 2, "y": 1},
       {"value": 15, "x": 3, "y": 2},
       {"value": 16, "x": 4, "y": 3}
     ],
     "edges": [[10, 5], [10, 12], [12, 15], [15, 16]]
   },
-  "ascii": "    10\n   /  \\\n  5    12\n ...",
   "steps": [5, 10, 12, 15, 16],
   "result": null
 }
@@ -98,12 +100,13 @@ Both `POST /tree` and `POST /algorithms/{name}` will also return `layout` and `a
 - The frontend multiplies `x`/`y` by its spacing in pixels. Vertical orientation = swap `x` and `y`.
 - `edges` are `[parent, child]` pairs: draw a line between their positions.
 - `steps` and `result` only in `POST /algorithms/{name}`.
+- Planned: `"ascii": "    10\n   /  \\\n  5    12\n ..."` in both responses, once Person 2's renderer exists.
 
 ## Conventions
 
 - **Imports** are relative to `backend/`: `from models.tree import BinaryTree`, not `from backend.models.tree ...`.
   In PyCharm mark `backend/` as *Sources Root* (right click → Mark Directory as).
-- **Algorithm contract** (target version, see Person 1 tasks):
+- **Algorithm contract** (the router calls every algorithm like this):
 
   ```python
   def bst_search(tree: BinaryTree, target: int | None = None) -> tuple[list[int], Any]:
@@ -124,26 +127,25 @@ Both `POST /tree` and `POST /algorithms/{name}` will also return `layout` and `a
 
 State on 2026-11-04:
 
-- ✅ `POST /tree` builds the tree, `GET /algorithms` lists 8 algorithms
-- ✅ `POST /algorithms/{name}` works for `inorder`, `preorder`, `postorder`, `bfs`
-- ❌ `bst_search`, `dfs_search`, `calculate_subtree_sum`, `count_nodes_and_leaves` return `500` (old signatures)
+- ✅ `POST /tree` returns the tree and `layout`, `GET /algorithms` lists all 9 algorithms with `needs_target`
+- ✅ `(tree, target) -> (steps, result)` contract in the router, `inorder`, `preorder`, `postorder`, `bfs` work
+- ❌ `bst_search`, `dfs_search`, `calculate_tree_height`, `calculate_subtree_sum`, `count_nodes_and_leaves` return `500` (old signatures)
 - ✅ frontend layout (input, tree canvas, settings, ASCII panel), Submit counts the nodes; nothing talks to the backend yet
 
-Person 1 adds `target` and the `(steps, result)` contract first, Person 2 builds on it.
-Person 3 can start right away with `POST /tree` and the 4 working traversals.
+Person 2 moves the remaining 5 algorithms to the contract and writes the ASCII renderer.
+Person 3 can draw from `layout` and animate the 4 working traversals right away.
 
 ### Person 1 — Backend API: ______
 
 - [x] `AlgorithmSpec(algorithm, needs_target)` in `algorithm_provider.py`
 - [x] Fix `POST /algorithms/{name}`: the router calls `spec.algorithm`; type hint `ALGORITHMS: dict[str, AlgorithmSpec]`
-- [ ] Add optional `target: int | None` to `TreeRequest`; return `422` when `spec.needs_target` and `target` is missing
-- [ ] Switch the router to the `(tree, target) -> (steps, result)` contract, add `result` to `AlgorithmResult`
-- [ ] `GET /algorithms` returns `[{"name": "bst_search", "needs_target": true}, ...]` so the frontend knows when to show the target input
-- [ ] Register `calculate_tree_height` (8 of 9 are in `ALGORITHMS`)
-- [ ] Layout: `services/layout.py` computes `{"nodes": [{value, x, y}], "edges": [[parent, child]]}` (format in *Planned response*),
-  add `layout` to the responses of `POST /tree` and `POST /algorithms/{name}`
-- [ ] Add `ascii` to both responses (string from Person 2's renderer)
-- [ ] Endpoint tests: `uv add --dev pytest httpx`, cover 200, 422 (duplicates, too long, missing target), 404
+- [x] Add optional `target: int | None` to `TreeRequest`; return `422` when `spec.needs_target` and `target` is missing
+- [x] Switch the router to the `(tree, target) -> (steps, result)` contract, add `result` to `AlgorithmResult`
+- [x] `GET /algorithms` returns `[{"name": "bst_search", "needs_target": true}, ...]` so the frontend knows when to show the target input
+- [x] Register `calculate_tree_height` (all 9 are in `ALGORITHMS`)
+- [x] Layout: `services/layout.py` computes `{"nodes": [{value, x, y}], "edges": [[parent, child]]}` (format in *Response format*),
+  `layout` is in the responses of `POST /tree` and `POST /algorithms/{name}`
+- [ ] Add `ascii` to both responses (waiting for Person 2's renderer)
 - [ ] When done: help Person 3 with the step animation
 
 ### Person 2 — Algorithms: ______
@@ -151,12 +153,12 @@ Person 3 can start right away with `POST /tree` and the 4 working traversals.
 - [x] Fix imports in all `static_algorithms/` files: `backend.models.tree` → `models.tree`
 - [x] `bfs`: missing `deque` import and `node.lelft` typo
 - [ ] Bring every algorithm to the contract `(tree, target=None) -> (steps, result)`:
-  - [ ] `inorder`, `preorder`, `postorder`, `bfs`: already return the visit order, only need to return `(steps, None)`
+  - [x] `inorder`, `preorder`, `postorder`, `bfs`: return `(steps, None)` (done with the contract switch)
   - [ ] `bst_search`, `dfs_search`: take `(node, target)` and return a `Node` → take the tree, record visited values, return `(steps, found value or None)`
   - [ ] `calculate_tree_height`, `calculate_subtree_sum`, `count_nodes_and_leaves`: take a node and return only the number → take the tree, record visited values, return `(steps, number)`
 - [ ] ASCII renderer: `services/ascii_renderer.py`, `render_ascii(tree) -> str`, drawing like the one in *How it works*
   (whitespace matters, the frontend shows it in a `<pre>`)
-- [ ] Unit test per algorithm with the expected results below, plus the ASCII output for that list
+- [ ] Check every algorithm against the expected results below (e.g. with `backend/test_main.http`)
 
 ### Person 3 — Frontend: ______
 
@@ -167,7 +169,7 @@ Person 3 can start right away with `POST /tree` and the 4 working traversals.
 - [ ] Insert / remove a single value; every change resends the whole list and redraws
 - [ ] Draw the tree into `<svg id="tree">` from `layout` (no tree logic in JS: circles at `x`/`y` × spacing, lines for `edges`),
   respect the settings (orientation, node/link shape, radius, color), make *Hide Settings* (`#download`) work.
-  Until Person 1 adds `layout`, use the example from *Planned response* as mock data
+  `layout` is already returned by `POST /tree`, see *Response format*
 - [ ] ASCII panel: put `ascii` from the response into `#ascii-output`, *Copy with spaces* (`#copy-ascii`) copies it
 - [ ] Add an algorithm dropdown (not in `index.html` yet), filled from `GET /algorithms`, with a target input when `needs_target`
 - [ ] Animate `steps`: highlight nodes in order, play / pause / next step / speed, show `result`
