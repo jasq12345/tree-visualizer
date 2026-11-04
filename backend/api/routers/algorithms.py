@@ -15,8 +15,8 @@ def list_algorithms() -> list[str]:
 
 @router.post("/{name}")
 def run_algorithm(name: str, request: TreeRequest) -> AlgorithmResult:
-    algorithm = ALGORITHMS.get(name)
-    if algorithm is None:
+    spec = ALGORITHMS.get(name)
+    if spec is None:
         raise HTTPException(status_code=404, detail=f"Unknown algorithm: {name}")
     tree = BinaryTree.from_values(request.values)
-    return AlgorithmResult(tree=tree, steps=algorithm(tree))
+    return AlgorithmResult(tree=tree, steps=spec.algorithm(tree))

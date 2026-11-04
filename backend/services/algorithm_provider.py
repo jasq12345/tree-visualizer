@@ -17,7 +17,7 @@ class AlgorithmSpec(BaseModel):
     algorithm: Algorithm
     needs_target: bool
 
-ALGORITHMS: dict[str, Algorithm] = {
+ALGORITHMS: dict[str, AlgorithmSpec] = {
     "inorder": AlgorithmSpec(algorithm=inorder_recursive, needs_target=False),
     "preorder": AlgorithmSpec(algorithm=preorder_recursive, needs_target=False),
     "postorder": AlgorithmSpec(algorithm=postorder_recursive, needs_target=False),
