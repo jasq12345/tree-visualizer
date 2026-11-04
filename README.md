@@ -68,8 +68,8 @@ frontend/
 
 Errors: `422` invalid input (message in `detail`), `404` unknown algorithm, `501` not implemented yet.
 
-> **Currently broken:** every `POST /algorithms/{name}` returns `500` (`TypeError: 'AlgorithmSpec' object is not callable`).
-> The registry now holds `AlgorithmSpec` objects, but the router still calls the entry directly. First task of Person 1.
+> **Partly working:** `inorder`, `preorder`, `postorder` and `bfs` work. `bst_search`, `dfs_search`, `calculate_subtree_sum`
+> and `count_nodes_and_leaves` return `500` until they get the new signature (they expect a node, the searches also a `target`).
 
 ### Planned response (layout + ASCII)
 
@@ -125,17 +125,17 @@ Both `POST /tree` and `POST /algorithms/{name}` will also return `layout` and `a
 State on 2026-11-04:
 
 - ✅ `POST /tree` builds the tree, `GET /algorithms` lists 8 algorithms
-- ❌ `POST /algorithms/{name}` returns `500` (see API section)
-- ✅ all algorithms import from `models.tree`, but still use their old signatures
+- ✅ `POST /algorithms/{name}` works for `inorder`, `preorder`, `postorder`, `bfs`
+- ❌ `bst_search`, `dfs_search`, `calculate_subtree_sum`, `count_nodes_and_leaves` return `500` (old signatures)
 - ✅ frontend layout (input, tree canvas, settings, ASCII panel), Submit counts the nodes; nothing talks to the backend yet
 
-Person 1 fixes the router and the contract first, Person 2 builds on it.
-Person 3 can start right away with `POST /tree`.
+Person 1 adds `target` and the `(steps, result)` contract first, Person 2 builds on it.
+Person 3 can start right away with `POST /tree` and the 4 working traversals.
 
 ### Person 1 — Backend API: ______
 
 - [x] `AlgorithmSpec(algorithm, needs_target)` in `algorithm_provider.py`
-- [ ] Fix `POST /algorithms/{name}`: the router must call `spec.algorithm`, not the spec; change the type hint to `ALGORITHMS: dict[str, AlgorithmSpec]`
+- [x] Fix `POST /algorithms/{name}`: the router calls `spec.algorithm`; type hint `ALGORITHMS: dict[str, AlgorithmSpec]`
 - [ ] Add optional `target: int | None` to `TreeRequest`; return `422` when `spec.needs_target` and `target` is missing
 - [ ] Switch the router to the `(tree, target) -> (steps, result)` contract, add `result` to `AlgorithmResult`
 - [ ] `GET /algorithms` returns `[{"name": "bst_search", "needs_target": true}, ...]` so the frontend knows when to show the target input
