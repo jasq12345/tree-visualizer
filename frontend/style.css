@@ -160,8 +160,142 @@ label {
   margin-left: 6px;
 }
 
+.AsciiHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  background: #f8fafc;
+  border-bottom: 1px solid rgb(233, 233, 233);
+}
+
+.AsciiTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.FileName {
+  font-weight: bold;
+  font-size: 16px;
+  color: #0f172a;
+}
+
+.Badge {
+  background: #dbeafe;
+  color: #2563eb;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.CopyButton {
+  background-color: rgb(37, 99, 235);
+  color: white;
+  border: none;
+  font-weight: bold;
+  font-size: 15px;
+  transition: 0.3s;
+}
+
+.CopyButton:hover {
+  background-color: rgb(29, 78, 216);
+}
+
+.AsciiOutput {
+  flex: 1;
+  margin: 0;
+  min-height: 500px;
+  padding: 24px 50px;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 16px;
+  line-height: 1.6;
+  white-space: pre;
+  overflow: auto;
+}
+
+.AsciiNote {
+  background: #fffbeb;
+  border-left: 4px solid #f59e0b;
+  color: #78350f;
+  padding: 16px 22px;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
 @media (max-width: 900px) {
   .Workspace {
     flex-direction: column;
   }
+}
+
+.Faq {
+  max-width: 900px;
+  margin: 20px auto 60px auto;
+  padding: 0 30px;
+}
+
+.Faq h2 {
+  text-align: center;
+  color: rgb(88, 88, 255);
+  margin-bottom: 24px;
+}
+
+.FaqItem {
+  border: 1px solid rgb(233, 233, 233);
+  border-radius: 12px;
+  margin-bottom: 12px;
+  background: white;
+  box-shadow: 0px 0px 10px rgb(240, 240, 240);
+  transition: 0.3s;
+}
+
+.FaqItem[open] {
+  border-color: royalblue;
+}
+
+.FaqItem summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 16px 20px;
+  font-weight: bold;
+  font-size: 16px;
+  color: #0f172a;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.FaqItem summary::-webkit-details-marker {
+  display: none;
+}
+
+.FaqItem summary::after {
+  content: "+";
+  font-size: 22px;
+  color: royalblue;
+  transition: transform 0.3s;
+}
+
+.FaqItem[open] summary::after {
+  transform: rotate(45deg);
+}
+
+.FaqItem p {
+  margin: 0;
+  padding: 0 20px 18px 20px;
+  color: rgb(80, 80, 80);
+  line-height: 1.7;
+  font-size: 15px;
+}
+
+.FaqItem code {
+  font-family: Consolas, "Courier New", monospace;
+  background: #f1f5f9;
+  color: #2563eb;
+  padding: 2px 6px;
+  border-radius: 5px;
 }
