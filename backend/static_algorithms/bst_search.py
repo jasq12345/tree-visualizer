@@ -7,3 +7,4 @@ def bst_search(node: Node | None, target: int) -> Node | None:
     if target < node.value:
         return bst_search(node.left, target)
     return bst_search(node.right, target)
+#t
