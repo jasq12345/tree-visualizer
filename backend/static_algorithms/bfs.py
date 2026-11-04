@@ -5,10 +5,10 @@ def bfs_traversal(root_or_tree):
   if not root:
     return []
   result = []
-  queue = deque([root])
+  queue = deque([root]) #check the algorithm, i dont think python support this syntax
 
   while queue:
-    node = queue.popleft()
+    node = queue.popleft() #same here
     result.append(node.value)
     if node.lelft:
       queue.append(node.left)
