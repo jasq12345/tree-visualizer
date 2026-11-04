@@ -69,7 +69,93 @@
           </div>
         </section>
       </section>
-      
+
+      <section class="Ascii">
+        <div class="AsciiHeader">
+          <div class="AsciiTitle">
+            <span class="FileName">Tree.txt</span>
+            <span class="Badge">WHITESPACE PRESERVED</span>
+          </div>
+          <button id="copy-ascii" class="CopyButton">Copy with spaces</button>
+        </div>
+        <pre id="ascii-output" class="AsciiOutput"></pre>
+        <div class="AsciiNote">
+          <strong>Use this in your interview.</strong> Hit <em>Copy with spaces</em> and paste it into
+          Notepad, VS Code, your interviewer's chat, a Google Doc, or any whiteboard tool — the ASCII
+          layout stays intact, so you can clearly walk through your binary tree during live coding
+          rounds without redrawing it on a whiteboard.
+        </div>
+      </section>
+    </section>
+
+    <section class="Faq">
+      <h2>Frequently Asked Questions</h2>
+
+      <details class="FaqItem" open>
+        <summary>How do I enter a binary tree?</summary>
+        <p>
+          Type node values in level order, separated by commas or spaces, e.g. <code>1,2,3,4,5</code>.
+          The first value is the root, the next two are its children, and so on level by level.
+        </p>
+      </details>
+
+      <details class="FaqItem">
+        <summary>How do I mark an empty (missing) node?</summary>
+        <p>
+          Use <code>N</code>, <code>null</code>, <code>None</code> or <code>#</code>. Example:
+          <code>1,2,3,N,5</code> means node 2 has no left child, only a right child 5.
+        </p>
+      </details>
+
+      <details class="FaqItem">
+        <summary>Is this the same format LeetCode uses?</summary>
+        <p>
+          Yes. LeetCode-style arrays like <code>[1,null,2,3]</code> work after removing the brackets,
+          so you can paste test cases straight from a problem.
+        </p>
+      </details>
+
+      <details class="FaqItem">
+        <summary>What does "Copy with spaces" do?</summary>
+        <p>
+          It copies the ASCII tree exactly as shown, with every space kept. Paste it into any
+          monospace editor and the branches stay aligned.
+        </p>
+      </details>
+
+      <details class="FaqItem">
+        <summary>Why does my pasted tree look crooked?</summary>
+        <p>
+          The target app uses a proportional font. Switch to a monospace font such as Consolas or
+          Courier New, or paste inside a code block.
+        </p>
+      </details>
+
+      <details class="FaqItem">
+        <summary>Can I change how the tree looks?</summary>
+        <p>
+          Yes. Open the settings under the tree to change orientation, node shape, link shape, node
+          radius and colour mode.
+        </p>
+      </details>
+
+      <details class="FaqItem">
+        <summary>Does it work for binary search trees?</summary>
+        <p>
+          Yes. Any binary tree works, including BSTs. The visualizer draws the structure you enter
+          and does not reorder values.
+        </p>
+      </details>
+
+      <details class="FaqItem">
+        <summary>Is my input saved or sent anywhere?</summary>
+        <p>
+          No. Everything runs in your browser. Refreshing the page clears the tree.
+        </p>
+      </details>
+    </section>
+
     <script src="script.js"></script>
+    <script src="ascii.js"></script>
   </body>
 </html>
