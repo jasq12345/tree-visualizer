@@ -1,4 +1,4 @@
-from backend.models.tree import Node, BinaryTree
+from models.tree import Node, BinaryTree
 
 def inorder_recursive(root_or_tree):
     root = root_or_tree.root if isinstance(root_or_tree, BinaryTree) else root_or_tree

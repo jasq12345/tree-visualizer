@@ -30,3 +30,28 @@ class BinaryTree(BaseModel):
                     child.parent = node
                     stack.append(child)
         return self
+
+    @classmethod
+    def from_values(cls, values: list[int]) -> Self:
+        """Build the tree from values in order; the first one becomes the root."""
+        tree = cls()
+        if not values:
+            return tree
+
+        root = Node(value=values[0])
+        tree.root = root
+
+        for value in values[1:]:
+            current = root
+            while True:
+                if value > current.value:
+                    if current.right is None:
+                        current.right = Node(value=value, parent=current)
+                        break
+                    current = current.right
+                else:
+                    if current.left is None:
+                        current.left = Node(value=value, parent=current)
+                        break
+                    current = current.left
+        return tree
