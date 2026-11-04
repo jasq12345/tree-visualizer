@@ -1,4 +1,4 @@
-from backend.models.tree import Node
+from models.tree import Node
 
 
 def calculate_subtree_sum(node: Node | None) -> int:

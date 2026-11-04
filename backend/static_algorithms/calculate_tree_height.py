@@ -1,4 +1,4 @@
-from backend.models.tree import Node
+from models.tree import Node
 
 
 def calculate_tree_height(node: Node | None) -> int:

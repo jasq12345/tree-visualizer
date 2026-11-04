@@ -1,4 +1,4 @@
-from backend.models.tree import Node
+from models.tree import Node
 
 
 def dfs_search(node: Node | None, target: int) -> Node | None:

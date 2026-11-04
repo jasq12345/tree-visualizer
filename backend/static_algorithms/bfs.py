@@ -1,4 +1,4 @@
-from backend.models.tree import Node, BinaryTree
+from models.tree import Node, BinaryTree
 from collections import deque
 
 def bfs_traversal(root_or_tree):

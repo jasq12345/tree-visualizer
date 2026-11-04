@@ -1,4 +1,4 @@
-from backend.models.tree import Node
+from models.tree import Node
 
 
 def bst_search(node: Node | None, target: int) -> Node | None:

@@ -1,4 +1,4 @@
-from backend.models.tree import Node
+from models.tree import Node
 
 
 def count_nodes_and_leaves(node: Node | None) -> tuple[int, int]:
