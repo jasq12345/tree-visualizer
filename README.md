@@ -201,10 +201,10 @@ Person 1 builds the compiler.
 
 - [x] Fix imports in all `static_algorithms/` files: `backend.models.tree` → `models.tree`
 - [x] `bfs`: missing `deque` import and `node.lelft` typo
-- [ ] Bring every algorithm to the contract `(tree, target=None) -> (steps, result)`:
+- [x] Bring every algorithm to the contract `(tree, target=None) -> (steps, result)`:
   - [x] `inorder`, `preorder`, `postorder`, `bfs`: return `(steps, None)` (done with the contract switch)
-  - [ ] `bst_search`, `dfs_search`: take `(node, target)` and return a `Node` → take the tree, record visited values, return `(steps, found value or None)`
-  - [ ] `calculate_tree_height`, `calculate_subtree_sum`, `count_nodes_and_leaves`: take a node and return only the number → take the tree, record visited values, return `(steps, number)`
+  - [x] `bst_search`, `dfs_search`: take `(node, target)` and return a `Node` → take the tree, record visited values, return `(steps, found value or None)`
+  - [x] `calculate_tree_height`, `calculate_subtree_sum`, `count_nodes_and_leaves`: take a node and return only the number → take the tree, record visited values, return `(steps, number)`
 - [ ] Check every algorithm against the expected results below (e.g. with `backend/test_main.http`)
 
 ### Person 3 — Frontend: ______
