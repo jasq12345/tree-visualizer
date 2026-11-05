@@ -3,6 +3,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
 }
@@ -20,10 +24,17 @@ header {
 }
 
 .Main {
-  padding: 30px;
+  padding: 40px 30px 30px 30px;
   border: 1px rgb(233, 233, 233) solid;
   border-radius: 12px;
-  width: 60%;
+  width: 85%;
+  max-width: 1100px;
+  margin-top: 20px;
+}
+
+.Main > p:first-child {
+  font-size: 17px;
+  margin-top: 0;
 }
 
 textarea {
@@ -47,10 +58,52 @@ textarea:not(:focus) {
 .bottom {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+}
+
+.InputType {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+}
+
+.InputType label {
+  margin: 0;
+}
+
+#input-type {
+  margin: 0;
+  padding: 5px 10px;
+  border-radius: 7px;
+  border: 1px solid rgb(210, 210, 210);
+  background: rgb(240, 240, 240);
+  font-size: 16px;
+}
+
+.TreeToolbar {
+  padding: 16px 18px;
+  border-bottom: 1px solid rgb(233, 233, 233);
+  background: #f8fafc;
+}
+
+.TreeToolbar .Operations,
+.TreeToolbar .Player {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.TreeToolbar button {
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
+.TreeToolbar .Result {
+  margin: 8px 0 0 0;
 }
 
 #count {
-  font-size: 12px;
+  font-size: 14px;
   color: grey;
 }
 
@@ -94,7 +147,7 @@ button:hover {
 }
 
 .Tree,
-.Ascii {
+.Code {
   flex: 1;
   min-width: 0;
   display: flex;
@@ -160,19 +213,13 @@ label {
   margin-left: 6px;
 }
 
-.AsciiHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 20px;
-  background: #f8fafc;
-  border-bottom: 1px solid rgb(233, 233, 233);
-}
-
-.AsciiTitle {
+.CodeHeader {
   display: flex;
   align-items: center;
   gap: 10px;
+  padding: 14px 20px;
+  background: #f8fafc;
+  border-bottom: 1px solid rgb(233, 233, 233);
 }
 
 .FileName {
@@ -190,38 +237,112 @@ label {
   border-radius: 999px;
 }
 
-.CopyButton {
-  background-color: rgb(37, 99, 235);
-  color: white;
-  border: none;
-  font-weight: bold;
-  font-size: 15px;
-  transition: 0.3s;
-}
-
-.CopyButton:hover {
-  background-color: rgb(29, 78, 216);
-}
-
-.AsciiOutput {
+.CodeEditor,
+.CodeEditor:focus,
+.CodeEditor:not(:focus) {
   flex: 1;
+  width: 100%;
+  min-height: 600px;
   margin: 0;
-  min-height: 500px;
-  padding: 24px 50px;
+  padding: 20px 24px;
+  border: none;
+  border-radius: 0;
+  outline: none;
+  resize: none;
   background: #0f172a;
   color: #e2e8f0;
+  caret-color: #f59e0b;
   font-family: Consolas, "Courier New", monospace;
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1.6;
+  tab-size: 4;
   white-space: pre;
   overflow: auto;
 }
 
+.CodeEditor::placeholder {
+  color: #64748b;
+}
 
+.Operations,
+.Player {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.Operations {
+  justify-content: space-between;
+}
+
+.OpGroup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.OpGroup input[type="number"] {
+  width: 110px;
+}
+
+.Player button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.Steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.StepChip {
+  font-family: Consolas, "Courier New", monospace;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #0f172a;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.StepChip.visited {
+  background: #22c55e;
+  color: white;
+}
+
+.StepChip.current {
+  background: #f59e0b;
+  color: #0f172a;
+  font-weight: bold;
+}
+
+.Result {
+  font-weight: bold;
+  color: #0f172a;
+  min-height: 1em;
+}
+
+.Error {
+  background: #fef2f2;
+  border-left: 4px solid #ef4444;
+  color: #991b1b;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+#tree {
+  display: block;
+  margin: 20px auto;
+}
 
 @media (max-width: 900px) {
   .Workspace {
     flex-direction: column;
   }
 }
-

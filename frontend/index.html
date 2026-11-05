@@ -16,21 +16,45 @@
       <section class="Main">
         <p>Enter Nodes:</p>
         <textarea id="textarea" placeholder="Enter tree node eg:-1,2,3 or 1 2 3"></textarea>
-        <p id="count">The number of tree nodes:</p>
+        <p id="count">The number of tree nodes: 0</p>
         <section class="bottom">
           <section>
-            <button class="Button1" onclick="counting()">Submit</button>
-            <button class="Button2">Reset</button>
+            <button id="submit-btn" class="Button1">Submit</button>
+            <button id="reset-btn" class="Button2">Reset</button>
           </section>
-          <span style="font-size: 14px; margin-top: 10px">Input type: Binary Tree</span>
+          <div class="InputType">
+            <label for="input-type">Input type:</label>
+            <select id="input-type">
+              <option value="binary-tree">Binary Tree</option>
+            </select>
+          </div>
         </section>
+
+        <p id="error" class="Error" hidden></p>
       </section>
     </section>
 
     <section class="Workspace">
+      <section class="Code">
+        <div class="CodeHeader">
+          <span class="FileName">algorithm.py</span>
+          <span class="Badge">CODE</span>
+        </div>
+        <textarea id="code-editor" class="CodeEditor" spellcheck="false" placeholder="def my_algorithm(tree, target=None):
+    steps = []
+    return steps, None"></textarea>
+      </section>
+
       <section class="Tree">
+        <div class="TreeToolbar">
+
+         
+
+          <div id="steps" class="Steps"></div>
+          <p id="result" class="Result"></p>
+        </div>
         <div class="TreeCanvas">
-          <svg id="tree" width="100%" height="100%"></svg>
+          <svg id="tree"></svg>
         </div>
         <section class="Settings">
           <button id="download">Hide Settings</button>
@@ -38,8 +62,8 @@
           <div class="SettingsRow">
             <label for="orientation">Orientation:</label>
             <select id="orientation">
+              <option value="vertical" selected>Vertical</option>
               <option value="horizontal">Horizontal</option>
-              <option value="vertical">Vertical</option>
             </select>
 
             <label for="nodeShape">Node Shape:</label>
@@ -59,7 +83,7 @@
 
           <div class="SettingsRow">
             <label for="nodeRadius">Node Radius:</label>
-            <input type="number" id="nodeRadius" value="10" min="5" max="20" />
+            <input type="number" id="nodeRadius" value="13" min="5" max="30" />
 
             <label for="nodeColor">Node Color:</label>
             <select id="nodeColor">
@@ -69,21 +93,7 @@
           </div>
         </section>
       </section>
-
-      <section class="Ascii">
-        <div class="AsciiHeader">
-          <div class="AsciiTitle">
-            <span class="FileName">Tree.txt</span>
-            <span class="Badge">WHITESPACE PRESERVED</span>
-          </div>
-          <button id="copy-ascii" class="CopyButton">Copy with spaces</button>
-        </div>
-        <pre id="ascii-output" class="AsciiOutput"></pre>
-        
-      </section>
     </section>
-
- 
 
     <script src="script.js"></script>
   </body>
