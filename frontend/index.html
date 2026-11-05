@@ -54,12 +54,29 @@
     <section class="Workspace">
       <section class="Code">
         <div class="CodeHeader">
-          <span class="FileName">algorithm.py</span>
-          <span class="Badge">CODE</span>
+          <div class="CodeTitle">
+            <span class="FileName">algorithm.py</span>
+            <span class="Badge">PYTHON</span>
+          </div>
+          <div class="Group">
+            <input type="number" id="code-target" placeholder="Target" />
+            <button id="run-code-btn" class="Button1">Run code</button>
+          </div>
         </div>
-        <textarea id="code-editor" class="CodeEditor" spellcheck="false" placeholder="def my_algorithm(tree, target=None):
+        <textarea id="code-editor" class="CodeEditor" spellcheck="false">def my_algorithm(tree, target=None):
     steps = []
-    return steps, None"></textarea>
+
+    def visit(node):
+        if node is None:
+            return
+        steps.append(node.value)
+        visit(node.left)
+        visit(node.right)
+
+    visit(tree.root)
+    return steps, None
+</textarea>
+        <pre id="code-output" class="CodeOutput"></pre>
       </section>
 
       <section class="Tree">

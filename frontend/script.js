@@ -27,9 +27,16 @@ const linkShapeSelect = document.getElementById("linkShape");
 const radiusInput = document.getElementById("nodeRadius");
 const colorSelect = document.getElementById("nodeColor");
 const codeEditor = document.getElementById("code-editor");
+const codeTarget = document.getElementById("code-target");
+const runCodeButton = document.getElementById("run-code-btn");
+const codeOutput = document.getElementById("code-output");
+
+const PYTHON_TIMEOUT_MS = 5000;
+let pythonWorker = null;
 
 const state = {
   values: [],
+  tree: null,
   layout: null,
   algorithms: [],
   backendOnline: false,
@@ -117,6 +124,7 @@ function setValues(values) {
 }
 
 function showTree(data) {
+  state.tree = data.tree;
   state.layout = data.layout;
   drawTree();
 }
@@ -166,6 +174,7 @@ function prettyName(name) {
   const upper = ["bfs", "dfs", "bst"];
   return name
     .split("_")
+    .filter(Boolean)
     .map((w) => (upper.includes(w) ? w.toUpperCase() : w[0].toUpperCase() + w.slice(1)))
     .join(" ");
 }
@@ -406,6 +415,86 @@ function drawTree() {
   svg.append(links, nodes);
 }
 
+function stopWorker() {
+  if (pythonWorker) pythonWorker.terminate();
+  pythonWorker = null;
+}
+
+function runPython(payload) {
+  return new Promise((resolve, reject) => {
+    if (!pythonWorker) pythonWorker = new Worker("python-worker.js", { type: "module" });
+    let timer = null;
+    pythonWorker.onmessage = ({ data }) => {
+      if (data.type === "started") {
+        codeOutput.textContent = "Running...";
+        timer = setTimeout(() => {
+          stopWorker();
+          reject(new ApiError(`Stopped after ${PYTHON_TIMEOUT_MS / 1000} s. Infinite loop?`));
+        }, PYTHON_TIMEOUT_MS);
+        return;
+      }
+      clearTimeout(timer);
+      resolve(data);
+    };
+    pythonWorker.onerror = (event) => {
+      event.preventDefault();
+      clearTimeout(timer);
+      stopWorker();
+      reject(new ApiError("Python could not load. Check your internet connection."));
+    };
+    pythonWorker.postMessage(payload);
+  });
+}
+
+function showCodeOutput(lines, failed) {
+  codeOutput.textContent = lines.filter((line) => line !== "").join("\n");
+  codeOutput.classList.toggle("failed", failed);
+}
+
+async function runCode() {
+  clearError();
+  const raw = codeTarget.value.trim();
+  if (raw !== "" && !/^-?\d+$/.test(raw)) throw new ApiError("Target must be a whole number");
+  const target = raw === "" ? null : Number(raw);
+  const values = parseValues(textarea.value);
+  if (values.length === 0) throw new ApiError("Enter some values first");
+  if (!codeEditor.value.trim()) throw new ApiError("Write some code first");
+
+  const data = await api("/tree", { values });
+  clearSteps();
+  setValues(values);
+  showTree(data);
+
+  runCodeButton.disabled = true;
+  showCodeOutput(["Loading Python..."], false);
+  let response;
+  try {
+    response = await runPython({ code: codeEditor.value, tree: data.tree, target });
+  } finally {
+    runCodeButton.disabled = false;
+  }
+
+  if (response.error) {
+    showCodeOutput([...response.output, response.error], true);
+    return;
+  }
+  state.spec = { name: response.name, needs_target: target !== null };
+  state.steps = response.steps;
+  state.result = response.result ?? null;
+  showCodeOutput([...response.output, `steps: [${response.steps.join(", ")}]`, `result: ${formatResult(state.result)}`], false);
+  renderSteps();
+  play();
+}
+
+async function runCodeSafely() {
+  try {
+    await runCode();
+  } catch (error) {
+    const message = error instanceof NetworkError ? networkMessage(error.message) : error.message;
+    showCodeOutput([message], true);
+  }
+}
+
 function handleEditorTab(event) {
   if (event.key !== "Tab") return;
   event.preventDefault();
@@ -442,6 +531,7 @@ settingsButton.addEventListener("click", toggleSettings);
 [orientationSelect, nodeShapeSelect, linkShapeSelect, colorSelect].forEach((s) => s.addEventListener("change", drawTree));
 radiusInput.addEventListener("input", drawTree);
 codeEditor.addEventListener("keydown", handleEditorTab);
+runCodeButton.addEventListener("click", runCodeSafely);
 
 guarded(loadAlgorithms);
 renderSteps();
