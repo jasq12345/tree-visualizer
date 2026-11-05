@@ -14,22 +14,39 @@
 
     <section class="Container">
       <section class="Main">
-        <p>Enter Nodes:</p>
+        <p class="FieldLabel">Enter Nodes:</p>
         <textarea id="textarea" placeholder="Enter tree node eg:-1,2,3 or 1 2 3"></textarea>
         <p id="count">The number of tree nodes: 0</p>
-        <section class="bottom">
-          <section>
+
+        <div class="Row">
+          <div class="Group">
             <button id="submit-btn" class="Button1">Submit</button>
             <button id="reset-btn" class="Button2">Reset</button>
-          </section>
-          <div class="InputType">
+          </div>
+          <div class="Group">
             <label for="input-type">Input type:</label>
             <select id="input-type">
-              <option value="binary-tree">Binary Tree</option>
+              <option value="bst">Binary Search Tree</option>
             </select>
           </div>
-        </section>
+        </div>
 
+        <div class="Row AlgoRow">
+          <div class="Group">
+            <select id="algorithm"></select>
+            <input type="number" id="target" placeholder="Target" hidden />
+            <button id="run-btn" class="Button1">Run</button>
+            <button id="play-btn" class="Button2" disabled>Play</button>
+            <button id="next-btn" class="Button2" disabled>Next</button>
+          </div>
+          <div class="Group">
+            <label for="speed">Speed:</label>
+            <input type="range" id="speed" min="1" max="10" value="5" />
+          </div>
+        </div>
+
+        <div id="steps" class="Steps"></div>
+        <p id="result" class="Result"></p>
         <p id="error" class="Error" hidden></p>
       </section>
     </section>
@@ -46,13 +63,6 @@
       </section>
 
       <section class="Tree">
-        <div class="TreeToolbar">
-
-         
-
-          <div id="steps" class="Steps"></div>
-          <p id="result" class="Result"></p>
-        </div>
         <div class="TreeCanvas">
           <svg id="tree"></svg>
         </div>

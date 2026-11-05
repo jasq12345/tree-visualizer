@@ -158,7 +158,7 @@ function resetAll() {
   setValues([]);
   state.layout = null;
   drawTree();
-  singleValueInput.value = "";
+  if (singleValueInput) singleValueInput.value = "";
   targetInput.value = "";
 }
 
@@ -287,7 +287,7 @@ function renderSteps() {
   const hasSteps = state.steps.length > 0;
   playButton.disabled = !hasSteps;
   nextButton.disabled = !hasSteps;
-  restartButton.disabled = !hasSteps;
+  if (restartButton) restartButton.disabled = !hasSteps;
   stepsBox.replaceChildren(
     ...state.steps.map((value, i) => {
       const chip = document.createElement("span");
@@ -422,9 +422,9 @@ function toggleSettings() {
 
 submitButton.addEventListener("click", () => guarded(submitTree));
 resetButton.addEventListener("click", resetAll);
-insertButton.addEventListener("click", () => guarded(insertValue));
-removeButton.addEventListener("click", () => guarded(removeValue));
-singleValueInput.addEventListener("keydown", (e) => {
+insertButton?.addEventListener("click", () => guarded(insertValue));
+removeButton?.addEventListener("click", () => guarded(removeValue));
+singleValueInput?.addEventListener("keydown", (e) => {
   if (e.key === "Enter") guarded(insertValue);
 });
 algorithmSelect.addEventListener("change", updateTargetVisibility);
@@ -434,7 +434,7 @@ nextButton.addEventListener("click", () => {
   stopAnimation();
   nextStep();
 });
-restartButton.addEventListener("click", restartSteps);
+restartButton?.addEventListener("click", restartSteps);
 speedInput.addEventListener("input", () => {
   if (state.timer) startTimer();
 });
