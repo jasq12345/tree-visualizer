@@ -299,9 +299,8 @@ label {
   border-radius: 0;
   outline: none;
   resize: none;
-  background: #0f172a;
-  color: #e2e8f0;
-  caret-color: #f59e0b;
+  background: white;
+  color: black;
   font-family: Consolas, "Courier New", monospace;
   font-size: 15px;
   line-height: 1.6;
@@ -310,9 +309,7 @@ label {
   overflow: auto;
 }
 
-.CodeEditor::placeholder {
-  color: #64748b;
-}
+
 
 @media (max-width: 900px) {
   .Workspace {
