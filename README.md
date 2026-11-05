@@ -25,7 +25,7 @@ Frontend: open `frontend/index.html` with Live Server or PyCharm's built-in serv
 2. After every change the frontend sends the **whole list** to the backend. The backend builds the tree from scratch, nothing is stored on the server.
 3. Tree rules: the first value is the root; each next value goes left if smaller, right if larger. Duplicates and lists longer than 50 are rejected with `422`.
 4. An algorithm returns `steps` (node values in the order it visits them) and the frontend highlights them one by one.
-5. **All tree logic lives in the backend.** It also returns node positions (`layout`) and a text drawing (`ascii`),
+5. **All tree logic lives in the backend.** It also returns node positions (`layout`),
    so the frontend has no tree code at all: it only draws what it gets and plays the animation.
 
 ```
@@ -54,7 +54,7 @@ backend/
   services/execution_manager.py    empty, reserved for the compiler
   static_algorithms/           one file per algorithm (9 files)
 frontend/
-  index.html     input panel (textarea, Submit, Reset), tree canvas <svg id="tree"> with settings, ASCII panel
+  index.html     input panel (textarea, Submit, Reset), tree canvas <svg id="tree"> with settings, ASCII panel (to be removed)
   script.js      counting(): counts the numbers in the textarea on Submit
   style.css
 ```
@@ -100,7 +100,6 @@ Example of `POST /algorithms/inorder` for `[10, 5, 12, 15, 16]`:
 - The frontend multiplies `x`/`y` by its spacing in pixels. Vertical orientation = swap `x` and `y`.
 - `edges` are `[parent, child]` pairs: draw a line between their positions.
 - `steps` and `result` only in `POST /algorithms/{name}`.
-- Planned: `"ascii": "    10\n   /  \\\n  5    12\n ..."` in both responses, once Person 2's renderer exists.
 
 ## Conventions
 
@@ -130,9 +129,9 @@ State on 2026-11-04:
 - ✅ `POST /tree` returns the tree and `layout`, `GET /algorithms` lists all 9 algorithms with `needs_target`
 - ✅ `(tree, target) -> (steps, result)` contract in the router, `inorder`, `preorder`, `postorder`, `bfs` work
 - ❌ `bst_search`, `dfs_search`, `calculate_tree_height`, `calculate_subtree_sum`, `count_nodes_and_leaves` return `500` (old signatures)
-- ✅ frontend layout (input, tree canvas, settings, ASCII panel), Submit counts the nodes; nothing talks to the backend yet
+- ✅ frontend layout (input, tree canvas, settings), Submit counts the nodes; nothing talks to the backend yet
 
-Person 2 moves the remaining 5 algorithms to the contract and writes the ASCII renderer.
+Person 2 moves the remaining 5 algorithms to the contract.
 Person 3 can draw from `layout` and animate the 4 working traversals right away.
 
 ### Person 1 — Backend API: ______
@@ -145,7 +144,6 @@ Person 3 can draw from `layout` and animate the 4 working traversals right away.
 - [x] Register `calculate_tree_height` (all 9 are in `ALGORITHMS`)
 - [x] Layout: `services/layout.py` computes `{"nodes": [{value, x, y}], "edges": [[parent, child]]}` (format in *Response format*),
   `layout` is in the responses of `POST /tree` and `POST /algorithms/{name}`
-- [ ] Add `ascii` to both responses (waiting for Person 2's renderer)
 - [ ] When done: help Person 3 with the step animation
 
 ### Person 2 — Algorithms: ______
@@ -156,13 +154,11 @@ Person 3 can draw from `layout` and animate the 4 working traversals right away.
   - [x] `inorder`, `preorder`, `postorder`, `bfs`: return `(steps, None)` (done with the contract switch)
   - [ ] `bst_search`, `dfs_search`: take `(node, target)` and return a `Node` → take the tree, record visited values, return `(steps, found value or None)`
   - [ ] `calculate_tree_height`, `calculate_subtree_sum`, `count_nodes_and_leaves`: take a node and return only the number → take the tree, record visited values, return `(steps, number)`
-- [ ] ASCII renderer: `services/ascii_renderer.py`, `render_ascii(tree) -> str`, drawing like the one in *How it works*
-  (whitespace matters, the frontend shows it in a `<pre>`)
 - [ ] Check every algorithm against the expected results below (e.g. with `backend/test_main.http`)
 
 ### Person 3 — Frontend: ______
 
-- [x] Page layout: input panel, tree canvas with settings, ASCII panel
+- [x] Page layout: input panel, tree canvas with settings
 - [x] Submit counts the nodes (`counting()` in `script.js`)
 - [ ] Submit also sends the list to `POST /tree` and draws the result; Reset clears the textarea, count and tree.
   Reuse the `-?\d+` regex from `counting()` (note: `1.5` currently turns into `1` and `5`)
@@ -170,7 +166,8 @@ Person 3 can draw from `layout` and animate the 4 working traversals right away.
 - [ ] Draw the tree into `<svg id="tree">` from `layout` (no tree logic in JS: circles at `x`/`y` × spacing, lines for `edges`),
   respect the settings (orientation, node/link shape, radius, color), make *Hide Settings* (`#download`) work.
   `layout` is already returned by `POST /tree`, see *Response format*
-- [ ] ASCII panel: put `ascii` from the response into `#ascii-output`, *Copy with spaces* (`#copy-ascii`) copies it
+- [ ] Remove the ASCII panel, we won't use it: `<section class="Ascii">` in `index.html` and its styles in `style.css`
+  (`.Ascii`, `.AsciiHeader`, `.AsciiTitle`, `.FileName`, `.Badge`, `.CopyButton`, `.AsciiOutput`)
 - [ ] Add an algorithm dropdown (not in `index.html` yet), filled from `GET /algorithms`, with a target input when `needs_target`
 - [ ] Animate `steps`: highlight nodes in order, play / pause / next step / speed, show `result`
 - [ ] Show API errors to the user (`detail` from `422`, e.g. duplicate values)
