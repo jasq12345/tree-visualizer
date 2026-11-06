@@ -30,9 +30,15 @@ const codeEditor = document.getElementById("code-editor");
 const codeTarget = document.getElementById("code-target");
 const runCodeButton = document.getElementById("run-code-btn");
 const codeOutput = document.getElementById("code-output");
+const linePrevButton = document.getElementById("line-prev-btn");
+const lineNextButton = document.getElementById("line-next-btn");
+const linePlayButton = document.getElementById("line-play-btn");
+const lineHighlight = document.getElementById("line-highlight");
 
-const PYTHON_TIMEOUT_MS = 5000;
+const PYTHON_TIMEOUT_MS = 3000;
 let pythonWorker = null;
+let pythonReady = false;
+let pendingRun = null;
 
 const state = {
   values: [],
@@ -45,6 +51,11 @@ const state = {
   stepIndex: -1,
   result: null,
   timer: null,
+  trace: null,
+  traceIndex: -1,
+  traceTimer: null,
+  highlightLine: null,
+  notFound: false,
 };
 
 class ApiError extends Error {}
@@ -131,6 +142,8 @@ function showTree(data) {
 
 async function buildTree(values) {
   const data = await api("/tree", { values });
+  state.notFound = false;
+  hideTrace();
   clearSteps();
   setValues(values);
   showTree(data);
@@ -162,6 +175,9 @@ function readSingleValue() {
 
 function resetAll() {
   clearError();
+  hideTrace();
+  state.trace = null;
+  state.notFound = false;
   clearSteps();
   setValues([]);
   state.layout = null;
@@ -209,12 +225,19 @@ async function runAlgorithm() {
   }
   stopAnimation();
   const data = await api(`/algorithms/${spec.name}`, body);
+  state.notFound = spec.needs_target && (data.result ?? null) === null;
   setValues(values);
-  state.spec = spec;
-  state.steps = data.steps || [];
-  state.stepIndex = -1;
-  state.result = data.result ?? null;
   showTree(data);
+  showSteps(data.steps || [], data.result, spec);
+}
+
+function showSteps(steps, result, spec) {
+  hideTrace();
+  stopAnimation();
+  state.spec = spec;
+  state.steps = steps;
+  state.stepIndex = -1;
+  state.result = result ?? null;
   renderSteps();
   play();
 }
@@ -280,9 +303,9 @@ function restartSteps() {
   renderSteps();
 }
 
-function formatResult(result) {
+function formatResult(result, spec = state.spec) {
   if (result === null || result === undefined) {
-    return state.spec && state.spec.needs_target ? "Target not found" : "Done";
+    return spec && spec.needs_target ? "Target not found" : "Done";
   }
   if (typeof result === "object") {
     return Object.entries(result)
@@ -325,6 +348,14 @@ function svgElement(tag, attributes) {
 }
 
 function nodeStatus(value) {
+  if (state.traceIndex >= 0) {
+    const events = state.trace.events;
+    if (events[state.traceIndex].node === value) return "current";
+    for (let i = 0; i < state.traceIndex; i++) {
+      if (events[i].node === value) return "visited";
+    }
+    return "idle";
+  }
   if (state.stepIndex < 0) return "idle";
   const position = state.steps.indexOf(value);
   if (position === state.stepIndex) return "current";
@@ -332,7 +363,13 @@ function nodeStatus(value) {
   return "idle";
 }
 
+function searchFinished() {
+  if (state.traceIndex >= 0) return state.traceIndex === state.trace.events.length - 1;
+  return state.steps.length === 0 || isFinished();
+}
+
 function nodeColors(status, isRoot) {
+  if (state.notFound && searchFinished()) return { fill: "#ef4444", text: "#ffffff" };
   if (colorSelect.value === "green") {
     if (status === "current") return { fill: "#111827", text: "#ffffff" };
     if (status === "visited") return { fill: "#9ca3af", text: "#111827" };
@@ -415,32 +452,62 @@ function drawTree() {
   svg.append(links, nodes);
 }
 
-function stopWorker() {
+function setRunCodeState(label, disabled) {
+  runCodeButton.textContent = label;
+  runCodeButton.disabled = disabled;
+  linePrevButton.disabled = disabled;
+  lineNextButton.disabled = disabled;
+  linePlayButton.disabled = disabled;
+}
+
+function startWorker() {
+  pythonReady = false;
+  setRunCodeState("Loading Python...", true);
+  pythonWorker = new Worker("compiler.js", { type: "module" });
+  pythonWorker.onmessage = ({ data }) => {
+    if (data.type === "ready") {
+      pythonReady = true;
+      setRunCodeState("Run code", false);
+    } else if (data.type === "failed") {
+      failWorker(data.error);
+    } else if (pendingRun) {
+      pendingRun.finish(data);
+    }
+  };
+  pythonWorker.onerror = (event) => {
+    event.preventDefault();
+    failWorker("Python could not load. Check your internet connection.");
+  };
+}
+
+function failWorker(message) {
   if (pythonWorker) pythonWorker.terminate();
   pythonWorker = null;
+  pythonReady = false;
+  setRunCodeState("Retry Python", false);
+  if (pendingRun) pendingRun.fail(message);
+  else showCodeOutput([message], true);
 }
 
 function runPython(payload) {
   return new Promise((resolve, reject) => {
-    if (!pythonWorker) pythonWorker = new Worker("python-worker.js", { type: "module" });
-    let timer = null;
-    pythonWorker.onmessage = ({ data }) => {
-      if (data.type === "started") {
-        codeOutput.textContent = "Running...";
-        timer = setTimeout(() => {
-          stopWorker();
-          reject(new ApiError(`Stopped after ${PYTHON_TIMEOUT_MS / 1000} s. Infinite loop?`));
-        }, PYTHON_TIMEOUT_MS);
-        return;
-      }
-      clearTimeout(timer);
-      resolve(data);
-    };
-    pythonWorker.onerror = (event) => {
-      event.preventDefault();
-      clearTimeout(timer);
-      stopWorker();
-      reject(new ApiError("Python could not load. Check your internet connection."));
+    const timer = setTimeout(() => {
+      pendingRun = null;
+      pythonWorker.terminate();
+      startWorker();
+      reject(new ApiError(`Time limit exceeded (${PYTHON_TIMEOUT_MS / 1000} s). Infinite loop?`));
+    }, PYTHON_TIMEOUT_MS);
+    pendingRun = {
+      finish: (data) => {
+        clearTimeout(timer);
+        pendingRun = null;
+        resolve(data);
+      },
+      fail: (message) => {
+        clearTimeout(timer);
+        pendingRun = null;
+        reject(new ApiError(message));
+      },
     };
     pythonWorker.postMessage(payload);
   });
@@ -449,10 +516,26 @@ function runPython(payload) {
 function showCodeOutput(lines, failed) {
   codeOutput.textContent = lines.filter((line) => line !== "").join("\n");
   codeOutput.classList.toggle("failed", failed);
+  codeOutput.scrollTop = codeOutput.scrollHeight;
 }
 
-async function runCode() {
+function traceKey() {
+  return [codeEditor.value, textarea.value.trim(), codeTarget.value.trim()].join("\u0000");
+}
+
+function printedLines(chunks) {
+  return chunks.join("").split("\n");
+}
+
+function finalLines(response, spec) {
+  if (response.error) return [response.error];
+  return [`steps: [${response.steps.join(", ")}]`, `result: ${formatResult(response.result ?? null, spec)}`];
+}
+
+async function runCode(mode = "run") {
   clearError();
+  if (!pythonWorker) startWorker();
+  if (!pythonReady) throw new ApiError("Python is still loading, try again in a moment");
   const raw = codeTarget.value.trim();
   if (raw !== "" && !/^-?\d+$/.test(raw)) throw new ApiError("Target must be a whole number");
   const target = raw === "" ? null : Number(raw);
@@ -460,39 +543,170 @@ async function runCode() {
   if (values.length === 0) throw new ApiError("Enter some values first");
   if (!codeEditor.value.trim()) throw new ApiError("Write some code first");
 
+  stopAnimation();
+  hideTrace();
   const data = await api("/tree", { values });
+  state.notFound = false;
   clearSteps();
   setValues(values);
   showTree(data);
 
-  runCodeButton.disabled = true;
-  showCodeOutput(["Loading Python..."], false);
+  setRunCodeState("Running...", true);
   let response;
   try {
     response = await runPython({ code: codeEditor.value, tree: data.tree, target });
   } finally {
-    runCodeButton.disabled = false;
+    if (pythonReady) setRunCodeState("Run code", false);
   }
 
-  if (response.error) {
-    showCodeOutput([...response.output, response.error], true);
+  const spec = { name: response.name || "my_algorithm", needs_target: target !== null };
+  state.notFound = target !== null && !response.error && (response.result ?? null) === null;
+  const printed = printedLines(response.printed || []);
+  state.trace = {
+    key: traceKey(),
+    events: response.trace || [],
+    printed: response.printed || [],
+    truncated: Boolean(response.truncated),
+    response,
+    spec,
+  };
+
+  if (!response.error) {
+    const known = new Set(data.layout.nodes.map((n) => n.value));
+    const unknown = response.steps.filter((value) => !known.has(value));
+    if (unknown.length > 0) {
+      response.error = `steps contain values that are not in the tree: ${unknown.join(", ")}`;
+    }
+  }
+
+  if (mode === "step" && state.trace.events.length > 0) {
+    state.traceIndex = 0;
+    renderTrace();
     return;
   }
-  state.spec = { name: response.name, needs_target: target !== null };
-  state.steps = response.steps;
-  state.result = response.result ?? null;
-  showCodeOutput([...response.output, `steps: [${response.steps.join(", ")}]`, `result: ${formatResult(state.result)}`], false);
-  renderSteps();
-  play();
+  if (response.error) {
+    showCodeOutput([...response.output, ...printed, response.error], true);
+    if (response.error_line) showLine(response.error_line);
+    return;
+  }
+  showCodeOutput([...response.output, ...printed, ...finalLines(response, spec)], false);
+  showSteps(response.steps, response.result, spec);
 }
 
-async function runCodeSafely() {
+async function runCodeSafely(mode = "run") {
   try {
-    await runCode();
+    await runCode(mode);
   } catch (error) {
     const message = error instanceof NetworkError ? networkMessage(error.message) : error.message;
     showCodeOutput([message], true);
   }
+}
+
+function lineMetrics() {
+  const style = getComputedStyle(codeEditor);
+  return { lineHeight: parseFloat(style.lineHeight), paddingTop: parseFloat(style.paddingTop) };
+}
+
+function positionHighlight() {
+  if (!state.highlightLine) {
+    lineHighlight.hidden = true;
+    return;
+  }
+  const { lineHeight, paddingTop } = lineMetrics();
+  lineHighlight.style.top = `${paddingTop + (state.highlightLine - 1) * lineHeight - codeEditor.scrollTop}px`;
+  lineHighlight.style.height = `${lineHeight}px`;
+  lineHighlight.hidden = false;
+}
+
+function showLine(line) {
+  const { lineHeight, paddingTop } = lineMetrics();
+  const top = paddingTop + (line - 1) * lineHeight;
+  const view = codeEditor.clientHeight;
+  if (top < codeEditor.scrollTop || top + lineHeight > codeEditor.scrollTop + view) {
+    codeEditor.scrollTop = Math.max(0, top - view / 3);
+  }
+  state.highlightLine = line;
+  positionHighlight();
+}
+
+function stopTracePlayback() {
+  clearInterval(state.traceTimer);
+  state.traceTimer = null;
+  linePlayButton.textContent = "Play";
+}
+
+function hideTrace() {
+  stopTracePlayback();
+  state.traceIndex = -1;
+  state.highlightLine = null;
+  positionHighlight();
+}
+
+function invalidateTrace() {
+  if (state.traceIndex >= 0 || state.highlightLine) {
+    hideTrace();
+    drawTree();
+  }
+  state.trace = null;
+}
+
+function renderTrace() {
+  const { events, printed, response, spec, truncated } = state.trace;
+  const event = events[state.traceIndex];
+  const last = state.traceIndex === events.length - 1;
+  showLine(event.line);
+  drawTree();
+  const lines = printedLines(printed.slice(0, last ? printed.length : event.printed));
+  lines.push(`> line ${event.line} in ${event.func}()   [${state.traceIndex + 1} / ${events.length}]`);
+  for (const [name, value] of Object.entries(event.locals)) lines.push(`  ${name} = ${value}`);
+  if (last) {
+    lines.push(...finalLines(response, spec));
+    if (truncated) lines.push(`(trace stopped after ${events.length} lines)`);
+  }
+  showCodeOutput(lines, last && Boolean(response.error));
+}
+
+async function prepareTrace() {
+  if (state.trace && state.trace.key === traceKey() && state.trace.events.length > 0) {
+    return "existing";
+  }
+  await runCodeSafely("step");
+  return state.traceIndex >= 0 ? "fresh" : "empty";
+}
+
+function moveTrace(delta) {
+  const lastIndex = state.trace.events.length - 1;
+  state.traceIndex = Math.min(lastIndex, Math.max(0, state.traceIndex + delta));
+  renderTrace();
+}
+
+async function lineNext() {
+  stopTracePlayback();
+  if ((await prepareTrace()) === "existing") moveTrace(1);
+}
+
+async function linePrev() {
+  stopTracePlayback();
+  if ((await prepareTrace()) === "existing") moveTrace(-1);
+}
+
+async function linePlay() {
+  if (state.traceTimer) {
+    stopTracePlayback();
+    return;
+  }
+  const status = await prepareTrace();
+  if (status === "empty") return;
+  if (status === "existing") {
+    if (state.traceIndex >= state.trace.events.length - 1) state.traceIndex = -1;
+    moveTrace(1);
+  }
+  if (state.traceIndex >= state.trace.events.length - 1) return;
+  linePlayButton.textContent = "Pause";
+  state.traceTimer = setInterval(() => {
+    moveTrace(1);
+    if (state.traceIndex >= state.trace.events.length - 1) stopTracePlayback();
+  }, stepDelay());
 }
 
 function handleEditorTab(event) {
@@ -501,6 +715,7 @@ function handleEditorTab(event) {
   const { selectionStart, selectionEnd, value } = codeEditor;
   codeEditor.value = value.slice(0, selectionStart) + "    " + value.slice(selectionEnd);
   codeEditor.selectionStart = codeEditor.selectionEnd = selectionStart + 4;
+  invalidateTrace();
 }
 
 function toggleSettings() {
@@ -531,7 +746,13 @@ settingsButton.addEventListener("click", toggleSettings);
 [orientationSelect, nodeShapeSelect, linkShapeSelect, colorSelect].forEach((s) => s.addEventListener("change", drawTree));
 radiusInput.addEventListener("input", drawTree);
 codeEditor.addEventListener("keydown", handleEditorTab);
-runCodeButton.addEventListener("click", runCodeSafely);
+runCodeButton.addEventListener("click", () => runCodeSafely("run"));
+codeEditor.addEventListener("input", invalidateTrace);
+codeEditor.addEventListener("scroll", positionHighlight);
+lineNextButton.addEventListener("click", lineNext);
+linePrevButton.addEventListener("click", linePrev);
+linePlayButton.addEventListener("click", linePlay);
+startWorker();
 
 guarded(loadAlgorithms);
 renderSteps();

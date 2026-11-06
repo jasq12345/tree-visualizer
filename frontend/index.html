@@ -60,10 +60,15 @@
           </div>
           <div class="Group">
             <input type="number" id="code-target" placeholder="Target" />
-            <button id="run-code-btn" class="Button1">Run code</button>
+            <button id="line-prev-btn" class="Button2 Small">Prev</button>
+            <button id="line-next-btn" class="Button2 Small">Next</button>
+            <button id="line-play-btn" class="Button2 Small">Play</button>
+            <button id="run-code-btn" class="Button1 Small">Run code</button>
           </div>
         </div>
-        <textarea id="code-editor" class="CodeEditor" spellcheck="false">def my_algorithm(tree, target=None):
+        <div class="EditorWrap">
+          <div id="line-highlight" class="LineHighlight" hidden></div>
+          <textarea id="code-editor" class="CodeEditor" spellcheck="false">def my_algorithm(tree, target=None):
     steps = []
 
     def visit(node):
@@ -76,6 +81,7 @@
     visit(tree.root)
     return steps, None
 </textarea>
+        </div>
         <pre id="code-output" class="CodeOutput"></pre>
       </section>
 

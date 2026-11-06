@@ -319,9 +319,40 @@ label {
   border-radius: 999px;
 }
 
+.Small {
+  padding: 7px 12px;
+  font-size: 14px;
+}
+
+.CodeHeader .Group {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.EditorWrap {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #0f172a;
+  overflow: hidden;
+}
+
+.LineHighlight {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: rgba(34, 197, 94, 0.22);
+  border-left: 4px solid #22c55e;
+  pointer-events: none;
+  transition: top 0.15s;
+}
+
 .CodeEditor,
 .CodeEditor:focus,
 .CodeEditor:not(:focus) {
+  position: relative;
+  z-index: 1;
   flex: 1;
   width: 100%;
   min-height: 520px;
@@ -332,7 +363,7 @@ label {
   border-radius: 0;
   outline: none;
   resize: none;
-  background: #0f172a;
+  background: transparent;
   color: #e2e8f0;
   caret-color: #f59e0b;
   font-family: Consolas, "Courier New", monospace;
@@ -356,4 +387,4 @@ label {
     width: 95%;
   }
 
-}   
+}
