@@ -492,25 +492,6 @@ function failWorker(message) {
 
 function runPython(payload) {
   return new Promise((resolve, reject) => {
-<<<<<<< HEAD
-    const timer = setTimeout(() => {
-      pendingRun = null;
-      pythonWorker.terminate();
-      startWorker();
-      reject(new ApiError(`Time limit exceeded (${PYTHON_TIMEOUT_MS / 1000} s). Infinite loop?`));
-    }, PYTHON_TIMEOUT_MS);
-    pendingRun = {
-      finish: (data) => {
-        clearTimeout(timer);
-        pendingRun = null;
-        resolve(data);
-      },
-      fail: (message) => {
-        clearTimeout(timer);
-        pendingRun = null;
-        reject(new ApiError(message));
-      },
-=======
     if (!pythonWorker) pythonWorker = new Worker("compiler.js");
     let timer = setTimeout(() => {
       stopWorker();
@@ -538,7 +519,6 @@ function runPython(payload) {
       clearTimeout(timer);
       stopWorker();
       reject(new ApiError(`Python worker failed: ${event.message || "unknown worker error"}`));
->>>>>>> 730151b (fix bugs in the compiler)
     };
     pythonWorker.postMessage(payload);
   });
@@ -615,15 +595,6 @@ async function runCode(mode = "run") {
     renderTrace();
     return;
   }
-<<<<<<< HEAD
-  if (response.error) {
-    showCodeOutput([...response.output, ...printed, response.error], true);
-    if (response.error_line) showLine(response.error_line);
-    return;
-  }
-  showCodeOutput([...response.output, ...printed, ...finalLines(response, spec)], false);
-  showSteps(response.steps, response.result, spec);
-=======
   if (!Array.isArray(response.steps) || response.steps.some((value) => !data.layout.nodes.some((node) => node.value === value))) {
     showCodeOutput(["my_algorithm must return steps containing only values from the current tree."], true);
     return;
@@ -636,7 +607,6 @@ async function runCode(mode = "run") {
   showCodeOutput([...response.output, `steps: [${response.steps.join(", ")}]`, `result: ${formatResult(state.result)}`], false);
   renderSteps();
   play();
->>>>>>> 730151b (fix bugs in the compiler)
 }
 
 async function runCodeSafely(mode = "run") {
