@@ -35,7 +35,8 @@ const lineNextButton = document.getElementById("line-next-btn");
 const linePlayButton = document.getElementById("line-play-btn");
 const lineHighlight = document.getElementById("line-highlight");
 
-const PYTHON_TIMEOUT_MS = 3000;
+const PYTHON_TIMEOUT_MS = 5000;
+const PYTHON_LOAD_TIMEOUT_MS = 60000;
 let pythonWorker = null;
 let pythonReady = false;
 let pendingRun = null;
@@ -491,6 +492,7 @@ function failWorker(message) {
 
 function runPython(payload) {
   return new Promise((resolve, reject) => {
+<<<<<<< HEAD
     const timer = setTimeout(() => {
       pendingRun = null;
       pythonWorker.terminate();
@@ -508,6 +510,35 @@ function runPython(payload) {
         pendingRun = null;
         reject(new ApiError(message));
       },
+=======
+    if (!pythonWorker) pythonWorker = new Worker("compiler.js");
+    let timer = setTimeout(() => {
+      stopWorker();
+      reject(new ApiError("Python took too long to load. Check your connection and try again."));
+    }, PYTHON_LOAD_TIMEOUT_MS);
+    pythonWorker.onmessage = ({ data }) => {
+      if (data.type === "loading") {
+        codeOutput.textContent = "Loading Python...";
+        return;
+      }
+      if (data.type === "started") {
+        clearTimeout(timer);
+        codeOutput.textContent = "Running...";
+        timer = setTimeout(() => {
+          stopWorker();
+          reject(new ApiError(`Stopped after ${PYTHON_TIMEOUT_MS / 1000} s. Infinite loop?`));
+        }, PYTHON_TIMEOUT_MS);
+        return;
+      }
+      clearTimeout(timer);
+      resolve(data);
+    };
+    pythonWorker.onerror = (event) => {
+      event.preventDefault();
+      clearTimeout(timer);
+      stopWorker();
+      reject(new ApiError(`Python worker failed: ${event.message || "unknown worker error"}`));
+>>>>>>> 730151b (fix bugs in the compiler)
     };
     pythonWorker.postMessage(payload);
   });
@@ -584,6 +615,7 @@ async function runCode(mode = "run") {
     renderTrace();
     return;
   }
+<<<<<<< HEAD
   if (response.error) {
     showCodeOutput([...response.output, ...printed, response.error], true);
     if (response.error_line) showLine(response.error_line);
@@ -591,6 +623,20 @@ async function runCode(mode = "run") {
   }
   showCodeOutput([...response.output, ...printed, ...finalLines(response, spec)], false);
   showSteps(response.steps, response.result, spec);
+=======
+  if (!Array.isArray(response.steps) || response.steps.some((value) => !data.layout.nodes.some((node) => node.value === value))) {
+    showCodeOutput(["my_algorithm must return steps containing only values from the current tree."], true);
+    return;
+  }
+  // Custom algorithms define their own result semantics; a null result does
+  // not necessarily mean that a supplied target was absent.
+  state.spec = { name: response.name, needs_target: false };
+  state.steps = response.steps;
+  state.result = response.result ?? null;
+  showCodeOutput([...response.output, `steps: [${response.steps.join(", ")}]`, `result: ${formatResult(state.result)}`], false);
+  renderSteps();
+  play();
+>>>>>>> 730151b (fix bugs in the compiler)
 }
 
 async function runCodeSafely(mode = "run") {
